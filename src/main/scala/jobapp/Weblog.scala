@@ -38,6 +38,26 @@ case class LogEntry (id:String, url:String, timestamp:DateTime, data:Array[Strin
 
 object Weblog extends Logging {
 
+  // You're gonna tell me I can't parse a context free grammar with regex, aren't you?
+  val elbLogRegex = """([^ ]+) ([^ ]+) ([^ :]+):\d+ ([^ ]+) ([0-9.-]+) ([0-9.-]+) ([0-9.-]+) (\d+) (\d+) (\d+) (\d+) "[A-Z]+ ([^ ]+) [^ ]+" "([^"]*)" ([^ "]+) ([^ "]+)""".r
+  // timestamp elb
+  // client:port backend:port
+  // request_processing_time backend_processing_time response_processing_time
+  // elb_status_code backend_status_code
+  // received_bytes sent_bytes
+  // "request"
+  // "user_agent"
+  // ssl_cipher ssl_protocol
+
+  // 2015-07-22T16:10:38.028609Z marketpalce-shop
+  // 106.51.132.54:4841 10.0.4.227:80
+  // 0.000022 0.000989 0.00002
+  // 400 400
+  // 0 166
+  // "GET https://paytm.com:443/'"\'\");|]*{%0d%0a<%00>/about/ HTTP/1.1"
+  // "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; WOW64; Trident/5.0)"
+  // DHE-RSA-AES128-SHA TLSv1
+
 
   /**
    * building:
@@ -151,27 +171,8 @@ object Weblog extends Logging {
   }
 
   def parse(line:String):Array[String] = {
-    // You're gonna tell me I can't parse a context free grammar with regex, aren't you?
-    val elbLog = """([^ ]+) ([^ ]+) ([^ :]+):\d+ ([^ ]+) ([0-9.-]+) ([0-9.-]+) ([0-9.-]+) (\d+) (\d+) (\d+) (\d+) "[A-Z]+ ([^ ]+) [^ ]+" "([^"]*)" ([^ "]+) ([^ "]+)""".r
-    // timestamp elb
-    // client:port backend:port
-    // request_processing_time backend_processing_time response_processing_time
-    // elb_status_code backend_status_code
-    // received_bytes sent_bytes
-    // "request"
-    // "user_agent"
-    // ssl_cipher ssl_protocol
-
-    // 2015-07-22T16:10:38.028609Z marketpalce-shop
-    // 106.51.132.54:4841 10.0.4.227:80
-    // 0.000022 0.000989 0.00002
-    // 400 400
-    // 0 166
-    // "GET https://paytm.com:443/'"\'\");|]*{%0d%0a<%00>/about/ HTTP/1.1"
-    // "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; WOW64; Trident/5.0)"
-    // DHE-RSA-AES128-SHA TLSv1
     line match {
-      case elbLog(timestamp, elb,
+      case elbLogRegex(timestamp, elb,
                   clientIp, serverAddress,
                   reqTime, backTime, respTime,
                   eldCode, backCode,
